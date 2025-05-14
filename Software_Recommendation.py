@@ -1,25 +1,18 @@
+import json, pandas as pd, numpy as np
+from sklearn.preprocessing import MinMaxScaler
+from scipy.spatial.distance import euclidean
+from datetime import datetime
 
-import json
-import pandas as pd
-with open('appraisals_dataset.json') as f:
-    data = json.load(f)
+file_name = "training_dataset.json"
+k = 3
 
-print ("Data loaded successfully")
-# Convert the JSON data to a pandas DataFrame
-df = pd.DataFrame(data)
-# Display the first few rows of the DataFrame
-print(df.head())
-# Display the columns of the DataFrame
-print(df.columns)
-# Display the shape of the DataFrame
-print(df.shape)
-# Display the data types of the columns
-print(df.dtypes)
-# Display the summary statistics of the DataFrame
-print(df.describe())
-# Check for missing values
-print(df.isnull().sum())
-# Display the unique values in the 'appraisal' column
-print(df['appraisal'].unique())
-# Display the unique values in the 'software' column
-print(df['software'].unique())
+def find_similar_properties(file_name, k):
+    with open(file_name) as f:
+        data = json.load(f)
+    
+    subject = data.get("subject", [])
+    properties = data.get("properties", [])
+    comps = data.get("comps", [])
+    
+
+find_similar_properties(file_name, k)
