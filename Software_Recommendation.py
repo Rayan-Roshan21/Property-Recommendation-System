@@ -10,41 +10,49 @@ k = 3
 
 #This is used to parse the date to a datetime object.
 def parse_effective_date(date_str):
-    if date_str == "N/A":
-        return None
+    if not date_str:
+        return datetime.now()
     try:
-        return datetime.strptime(date_str, "%Y-%m-%d").date()
+        return datetime.strptime(date_str, "%Y-%m-%d")
     except ValueError:
-        return None
+        return datetime.now()
+
+# This function is used to parse the GLA (Gross Living Area) value.
+def safe_parse_gla(gla_value):
+    if not gla_value:
+        return 0.0
+    try:
+        cleaned = str(gla_value).replace("SqFt", "").replace(",", "").strip()
+        return float(cleaned)
+    except (ValueError, TypeError):
+        return 0.0
 
 # Here we are defining a function to calculate the age of the property.
 def get_age(year_built_or_age, effective_year):
-    if year_built_or_age == "N/A":
-        return None
+    if year_built_or_age is None:
+        return 0
     try:
-        year_built = int(year_built_or_age)
-        #effective_year = parse_effective_date(effective_year)
-        if effective_year:
-            if effective_year.year - year_built < 0:
-                return None
-            return effective_year.year - year_built
-        else:
-            return None
+        val = int(float(str(year_built_or_age)))
+        if 0 < val < 150:
+            return val
+        elif val >= 1800:
+            return effective_year - val
     except ValueError:
-        return None
+        pass
+    return 0
 
 def preprocess_property_data(subject, properties, effective_date_str):
     effective_date = parse_effective_date(effective_date_str)
-    effective_year = effective_date.year if effective_date else None
+    effective_year = effective_date.year if isinstance(effective_date, datetime) else datetime.now().year
 
     procecessed_props = []
 
     # Here we will process the subject's key property characterisitics.
     subject_features = {
         'id':'subject',
-        'gla': subject.get("gla"),
+        'gla': safe_parse_gla(subject.get("gla")),
         "rooms": subject.get("room_total", 0),
-        "age": get_age(subject.get("year_built", "N/A"), effective_date_str),
+        "age": get_age(subject.get("year_built", "N/A"), effective_year),
         "structure_type": str(subject.get("structure_type"))
     }
     procecessed_props.append(subject_features)
@@ -52,10 +60,10 @@ def preprocess_property_data(subject, properties, effective_date_str):
     # Here we will process the key property characterisitics of the properties.
     for i, property in enumerate(properties):
         prop_features = {
-            'id': "property",
-            'gla': property.get("gla"),
+            'id': property.get("id", f"property_{i}"),
+            'gla': safe_parse_gla(property.get("gla")),
             "rooms": property.get("room_total", 0),
-            "age": get_age(property.get("year_built", "N/A"), effective_date_str),
+            "age": get_age(property.get("year_built", "N/A"), effective_year),
             "structure_type": str(property.get("structure_type"))
         }
         procecessed_props.append(prop_features)
@@ -97,8 +105,10 @@ def preprocess_property_data(subject, properties, effective_date_str):
 
     # Here we're adding the original id to the scaled dataframe for the properties.
     # This would be used to identify the properties in the original dataset.
-    candidates_scaled_df['original_id'] = candidate_df.index.map(df.set_index('id').id)
-    candidates_scaled_df['address'] = candidates_scaled_df.apply(lambda row: euclidean(subject_scaled_df.iloc[0], row[final_feature_columns]), axis=1)
+    # ✅ Corrected version:
+    candidates_scaled_df['original_id'] = properties_df['id'].values
+    candidates_scaled_df['address'] = properties_df.get('address', pd.Series([""] * len(properties_df)))
+
 
     # Here we're returning the row representing the subject property, the scaled properties dataframe, and the list of features used for distance calculation (euclidean distance calculations).
     return subject_scaled_df.iloc[0], candidates_scaled_df, final_feature_columns
@@ -106,10 +116,78 @@ def find_similar_properties(file_name, k):
     with open(file_name) as f:
         data = json.load(f)
     
+    # Here we're extracting the subject property and the properties from the JSON data.
     subject = data.get("subject", [])
     properties = data.get("properties", [])
     comps = data.get("comps", [])
+    all_candidates = properties + comps
+
+    # Here we're extracting the effective date from the subject property.
+    effective_date_str = subject.get("effective_date", "")
+
+    #Preprocess the data
+    subject_scaled, candidates_scaled, final_feature_columns = preprocess_property_data(subject, all_candidates, effective_date_str)
+
+    #Calculating the distances
+    distances = []
+    subject_vector = subject_scaled[final_feature_columns].values.astype(float)
+
+    for index , row in candidates_scaled.iterrows():
+        candidate_vector = row[final_feature_columns].values.astype(float)
+        dist = euclidean(subject_vector, candidate_vector)
+        distances.append({
+            'id': row['original_id'],
+            'distance': dist,
+            'address': row['address']
+        })
     
-    print (preprocess_property_data(subject, properties, comps[0].get("effective_date")))
+    #Putting rhe distances in a dataframe
+    distances_df = pd.DataFrame(distances)
+    # Here we're sorting the distances in ascending order.
+    sorted_distances_df = distances_df.sort_values(by='distance', ascending=True)
+    # Here we're resetting the index of the sorted distances dataframe.
+    print (f"\nTop {k} most similar properties")
+    top_k_properties = []
+    output_rows = []
+    for i in range(min(k, len(sorted_distances_df))):
+       neighbour = sorted_distances_df.iloc[i]
+       original_property_detail = next((prop for prop in properties if prop.get("id") == neighbour['id']), None)
+       is_comp = any(str(comp.get("id")) == str(neighbour['id']) for comp in comps)
+
+       print (f"\nRank {i+1}:")
+       print (f"Property ID: {neighbour['id']}")
+       print (f"Distance: {neighbour['distance']}")
+       print (f"Address: {neighbour['address']}")
+       print (f"Is Comp: {'yes' if is_comp else 'no'}")
+       if original_property_detail:
+           print (f"Property Details: {json.dumps(original_property_detail, indent=2)}")
+           row = {
+                'rank': i + 1,
+                'id': neighbour['id'],
+                'distance': neighbour['distance'],
+                'address': neighbour['address'],
+                'is_comp': is_comp,
+                'property_details': original_property_detail,
+                'gla': original_property_detail.get("gla"), # type: ignore
+                'Bedrooms': original_property_detail.get("room_total", 0), # type: ignore
+           }
+           output_rows.append(row)
+           top_k_properties.append(original_property_detail)
+
+    # Here we're saving the output to a CSV file.
+    output_df = pd.DataFrame(output_rows)
+    output_df.to_csv('output.csv', index=False)
+    print (f"\nOutput saved to output.csv")
+
+    return top_k_properties
+
+if __name__ == "__main__":
+    # Call the function to find similar properties
+    print ("Beginning the software recommendation process...")
+    similar_props = find_similar_properties(file_name, k)
+    if similar_props:
+        print (f"\nFound {len(similar_props)} similar properties.")
+    else:
+        print ("No similar properties found.")
 
 find_similar_properties(file_name, k)
