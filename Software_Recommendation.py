@@ -5,7 +5,7 @@ from scipy.spatial.distance import euclidean
 from datetime import datetime
 
 #These are our configuration variables
-file_name = "training_dataset_two.json"
+file_name = "training_dataset.json"
 k = 3
 
 #This is used to parse the date to a datetime object.
