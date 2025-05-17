@@ -144,8 +144,10 @@ def find_similar_properties(file_name, k):
     subject_vector = subject_scaled[final_feature_columns].values.astype(float) 
     subject_vector *= np.array([weights[col] for col in final_feature_columns]) # Apply weights to the subject vector
 
+    # Here we're iterating over the candidates and calculating the euclidean distance between the subject and each candidate.
     for index , row in candidates_scaled.iterrows():
         candidate_vector = row[final_feature_columns].values.astype(float)
+        # Here we're applying the weights to the candidate vector.
         dist = euclidean(subject_vector, candidate_vector)
         distances.append({
             'id': row['original_id'],
@@ -153,7 +155,7 @@ def find_similar_properties(file_name, k):
             'address': row['address']
         })
     
-    #Putting rhe distances in a dataframe
+    #Putting the distances in a dataframe
     distances_df = pd.DataFrame(distances)
     # Here we're sorting the distances in ascending order.
     sorted_distances_df = distances_df.sort_values(by='distance', ascending=True)
@@ -176,6 +178,7 @@ def find_similar_properties(file_name, k):
        print (f"Is Comp: {'yes' if is_comp else 'no'}")
        if original_property_detail:
            print (f"Property Details: {json.dumps(original_property_detail, indent=2)}")
+           # Here we're creating a row for the output dataframe.
            row = {
                 'rank': i + 1,
                 'id': neighbour['id'],
@@ -186,6 +189,7 @@ def find_similar_properties(file_name, k):
                 'gla': original_property_detail.get("gla"), # type: ignore
                 'Bedrooms': original_property_detail.get("room_total", 0), # type: ignore
            }
+           # Here we're appending the row to the output rows.
            output_rows.append(row)
            top_k_properties.append(original_property_detail)
 
