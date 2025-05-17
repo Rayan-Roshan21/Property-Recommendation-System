@@ -5,7 +5,7 @@ from scipy.spatial.distance import euclidean
 from datetime import datetime
 
 #These are our configuration variables
-file_name = "training_dataset.json"
+file_name = "training_dataset_two.json"
 k = 3
 
 #This is used to parse the date to a datetime object.
@@ -128,9 +128,21 @@ def find_similar_properties(file_name, k):
     #Preprocess the data
     subject_scaled, candidates_scaled, final_feature_columns = preprocess_property_data(subject, all_candidates, effective_date_str)
 
+    # Here we're defining the weights for the features used in the distance calculation.
+    weights = {
+        'gla': 1.0,
+        'rooms': 1.0,
+        'age': 1.0
+    }
+    # Here we're adding the weights for the one-hot encoded columns.
+    for col in final_feature_columns:
+        if col not in weights:
+            weights[col] = 0.2  # default weight for one-hot columns
+
     #Calculating the distances
     distances = []
-    subject_vector = subject_scaled[final_feature_columns].values.astype(float)
+    subject_vector = subject_scaled[final_feature_columns].values.astype(float) 
+    subject_vector *= np.array([weights[col] for col in final_feature_columns]) # Apply weights to the subject vector
 
     for index , row in candidates_scaled.iterrows():
         candidate_vector = row[final_feature_columns].values.astype(float)
@@ -150,10 +162,13 @@ def find_similar_properties(file_name, k):
     top_k_properties = []
     output_rows = []
     for i in range(min(k, len(sorted_distances_df))):
+       # Here we're getting the top 3 properties based on the sorted distances.
        neighbour = sorted_distances_df.iloc[i]
+       # Here we're getting the original property details from the properties list.
        original_property_detail = next((prop for prop in properties if prop.get("id") == neighbour['id']), None)
        is_comp = any(str(comp.get("id")) == str(neighbour['id']) for comp in comps)
 
+        # Here we're printing the details of the top 3 properties.
        print (f"\nRank {i+1}:")
        print (f"Property ID: {neighbour['id']}")
        print (f"Distance: {neighbour['distance']}")
