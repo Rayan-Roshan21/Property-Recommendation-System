@@ -105,10 +105,8 @@ def preprocess_property_data(subject, properties, effective_date_str):
 
     # Here we're adding the original id to the scaled dataframe for the properties.
     # This would be used to identify the properties in the original dataset.
-    # ✅ Corrected version:
     candidates_scaled_df['original_id'] = properties_df['id'].values
     candidates_scaled_df['address'] = properties_df.get('address', pd.Series([""] * len(properties_df)))
-
 
     # Here we're returning the row representing the subject property, the scaled properties dataframe, and the list of features used for distance calculation (euclidean distance calculations).
     return subject_scaled_df.iloc[0], candidates_scaled_df, final_feature_columns
@@ -198,6 +196,7 @@ def find_similar_properties(file_name, k):
     output_df.to_csv('output.csv', index=False)
     print (f"\nOutput saved to output.csv")
 
+    # Here we're returning the top 3 properties.
     return top_k_properties
 
 if __name__ == "__main__":
@@ -209,4 +208,5 @@ if __name__ == "__main__":
     else:
         print ("No similar properties found.")
 
+# This is the main function that will be called when the script is run.
 find_similar_properties(file_name, k)
