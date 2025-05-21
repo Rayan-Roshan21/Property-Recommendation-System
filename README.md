@@ -8,7 +8,7 @@ This project is a Python-based property recommendation tool that uses feature si
 
 - `training_dataset.json`: Input file containing subject property, candidate properties, and known comps.
 - `output.csv`: Output file with the top k most similar properties.
-- `property_recommender.py`: Main script performing property preprocessing, normalization, similarity calculation, and result export.
+- `software_recommendation_notebook.ipynb`: Jupyter notebook containing the full workflow from preprocessing to distance computation and output.
 
 ---
 
@@ -63,13 +63,15 @@ The algorithm:
 
 ## ▶️ Usage
 
+Open the notebook using Jupyter:
+
 ```bash
-python property_recommender.py
+jupyter notebook software_recommendation_notebook.ipynb
 ```
 
-Make sure to place your `training_dataset.json` in the same directory as the script.
+Run each cell sequentially to perform preprocessing, compute similarity, and view/save results.
 
-You can modify the number of recommendations by changing the value of `k` in the script.
+You can modify the number of recommendations by changing the value of `k` in the notebook.
 
 ---
 
