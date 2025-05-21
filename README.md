@@ -66,7 +66,7 @@ The algorithm:
 Open the notebook using Jupyter:
 
 ```bash
-jupyter notebook software_recommendation_notebook.ipynb
+jupyter notebook Software_recommendation_notebook.ipynb
 ```
 
 Run each cell sequentially to perform preprocessing, compute similarity, and view/save results.
