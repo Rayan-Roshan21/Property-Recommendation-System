@@ -1,6 +1,6 @@
 # 🏡 Property Recommendation System
 
-This project is a Python-based property recommendation tool that uses feature similarity to identify the top 3 comparable properties to a given subject property. It reads property data from a JSON file and outputs the most similar properties using a distance-based algorithm.
+This project is a Python-based property recommendation tool that uses feature similarity to identify the top **k** comparable properties to a given subject property. It reads property data from a JSON file and outputs the most similar properties using a distance-based algorithm.
 
 ---
 
@@ -45,29 +45,19 @@ The algorithm:
 
 ## 📥 Input Format (`training_dataset.json`)
 
+### Required Keys
+
 ```json
 {
-  "subject": {
-    "id": "subject_1",
-    "gla": "2000 SqFt",
-    "room_total": 6,
-    "year_built": "2005",
-    "structure_type": "Detached",
-    "effective_date": "2023-09-01"
-  },
-  "properties": [
-    {
-      "id": "p1",
-      "gla": "1800 SqFt",
-      "room_total": 5,
-      "year_built": "2010",
-      "structure_type": "Semi-Detached",
-      "address": "123 Main St"
-    }
-  ],
-  "comps": []
+  "subject": {...},
+  "properties": [...],
+  "comps": [...]
 }
 ```
+
+- `subject`: The target property you're trying to compare against.
+- `properties`: A list of all potential comparable properties in the area.
+- `comps`: A list of previously chosen comparable properties. These will also be evaluated alongside `properties` but flagged in the results.
 
 ---
 
@@ -79,6 +69,8 @@ python property_recommender.py
 
 Make sure to place your `training_dataset.json` in the same directory as the script.
 
+You can modify the number of recommendations by changing the value of `k` in the script.
+
 ---
 
 ## 💾 Output
@@ -89,21 +81,26 @@ The output is saved to `output.csv`, containing:
 - ID
 - Distance from subject property
 - Address
-- If it was originally a comp
+- Is Comp (True/False)
 - Full property details (including GLA and bedroom count)
 
 ---
 
-## 📦 Requirements
+## 📦 Dependencies
 
-- Python 3.7+
-- pandas
-- numpy
-- scikit-learn
-- scipy
-
-Install dependencies with:
+Install required Python packages with:
 
 ```bash
-pip install -r requirements.txt
+pip install pandas
+pip install numpy
+pip install scikit-learn
+pip install scipy
 ```
+
+Python 3.7+ is recommended.
+
+---
+
+## 📘 License
+
+MIT License
