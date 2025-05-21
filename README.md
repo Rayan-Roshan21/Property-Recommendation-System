@@ -1,6 +1,6 @@
 # 🏡 Property Recommendation System
 
-This project is a Python-based property recommendation tool that uses feature similarity to identify the top **k** comparable properties to a given subject property. It reads property data from a JSON file and outputs the most similar properties using a distance-based algorithm.
+This project is a Python-based property recommendation tool that uses feature similarity to identify the top 3 comparable properties to a given subject property. It reads property data from a JSON file and outputs the most similar properties using a distance-based algorithm.
 
 ---
 
@@ -107,9 +107,3 @@ Install dependencies with:
 ```bash
 pip install -r requirements.txt
 ```
-
----
-
-## 📘 License
-
-MIT License
